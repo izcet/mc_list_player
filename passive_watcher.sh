@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 ## EDIT These to match your system
 
-LOG_DIR="logs" # directory where the log files are
+LOG_DIR="/home/dubious/minecraft/logs" # directory where the log files are
 LOG_FILE="latest.log" # the last "unzipped" one, the log file we monitor
 OUT_FILE="mcap_list.txt" # where you want the list stored !! VOLATILE !!
 
@@ -14,8 +14,10 @@ TEMP="/tmp/.mcap_$(head -c 20 /dev/random | base64)" # working directory
 
 
 ## DO not edit these
+## but DO update line 65 to match your system
+
 REGEX_MACOS="s/............Server.thread.INFO]: ([[:alnum:]_]{1,}) (joined|left) the game/\1 \2/"
-REGEX_LINUX=""
+REGEX_LINUX="s/............Server thread\/INFO\]: (\w+) (joined|left) the game/\1 \2/"
 declare -a ARR
 
 
@@ -56,9 +58,14 @@ function remove_player () {
 
 # parse_logs
 function parse_logs () {
-	echo "Parsing logs... \c"
+	echo -n "Parsing logs... "
 	while read LINE ; do
-		PLAYER="$(echo "$LINE" | sed -E "$REGEX_MACOS")"
+
+		## EDIT THIS LINE RIGHT HERE -----v
+		PLAYER="$(echo "$LINE" | sed -E "$REGEX_LINUX")"
+
+
+		echo "PLAYER={$PLAYER}"
 		if [ "$PLAYER" != "$LINE" ] ; then
 			ACTION="$(echo "$PLAYER" | cut -d' ' -f2)"
 			PLAYER="$(echo "$PLAYER" | cut -d' ' -f1)"
@@ -76,11 +83,11 @@ function parse_logs () {
 
 # update_file
 function update_file () {
-	echo "Updating file... \c"
+	echo -n "Updating file... "
 	if [ "${#ARR[@]}" -eq "0" ] ; then
 		echo "(no players currently online)" > "$OUT_FILE"
 	else
-		echo "\c" > "$OUT_FILE"
+		echo -n "" > "$OUT_FILE"
 		for PLAYER in "${ARR[@]}" ; do
 			echo "$PLAYER" >> "$OUT_FILE"
 		done
