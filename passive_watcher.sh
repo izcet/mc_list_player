@@ -28,11 +28,13 @@ trap on_exit EXIT
 
 # add_player name
 function add_player () {
-	exit
+	return
+	#exit
 }
 # remove_player name
 function remove_player () {
-	exit
+	return
+	#exit
 }
 
 
@@ -40,13 +42,23 @@ function remove_player () {
 
 
 
-
+REGEX_MACOS="s/............Server.thread.INFO]: ([[:alnum:]_]{1,}) (joined|left) the game/\1 \2/"
+REGEX_LINUX=""
 function parse_logs () {
 	while read LINE ; do
-		echo "LINE=\"$LINE\""
-		PLAYER="$(echo "$LINE" | sed -E 's/............Server.thread.INFO]: ([[:alnum:]_]{1,}) (joined|left) the game/\1 \2/')"
+		PLAYER="$(echo "$LINE" | sed -E "$REGEX_MACOS")"
 		if [ "$PLAYER" != "$LINE" ] ; then
-			echo "PLAYER=\"$PLAYER\"\n"
+			ACTION="$(echo "$PLAYER" | cut -d' ' -f2)"
+			PLAYER="$(echo "$PLAYER" | cut -d' ' -f1)"
+			if [ "$ACTION" == "joined" ] ; then
+				add_player "$PLAYER"
+			elif [ "$ACTION" == "left" ] ; then
+				remove_player "$PLAYER"
+			else
+				echo "whoops"
+			fi
+			echo "$PLAYER"
+			echo "$ACTION"
 		fi
 	done < "$TEMP/$LFIL"
 }
@@ -55,7 +67,7 @@ parse_logs
 
 exit
 
-###########################################################################################################
+###################################################################################################
 while [ 1 ] ; do
 
 	if [ -n "$(diff "$TEMP/$LFIL" "$LOGS")" ] ; then
