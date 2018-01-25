@@ -1,25 +1,32 @@
 #!/bin/sh
 
-LOG_DIR="logs"
-LOG_FILE="latest.log"
-LOGS="$LOG_DIR/$LOG_FILE"
+## EDIT These to match your system
 
-TEMP="/tmp/.mcap_$(head -c 20 /dev/random | base64)"
+LOG_DIR="logs" # directory where the log files are
+LOG_FILE="latest.log" # the last "unzipped" one, the log file we monitor
+OUT_FILE="mcap_list.txt" # where you want the list stored !! VOLATILE !!
 
-OUT_FILE="mcap_list.txt"
 
+## These are recommended values
+
+LOGS="$LOG_DIR/$LOG_FILE" # the actual files
+TEMP="/tmp/.mcap_$(head -c 20 /dev/random | base64)" # working directory
+
+
+## DO not edit these
 REGEX_MACOS="s/............Server.thread.INFO]: ([[:alnum:]_]{1,}) (joined|left) the game/\1 \2/"
 REGEX_LINUX=""
-
-
 declare -a ARR
 
+
+## For a clean exit
 function on_exit {
 	unset ARR
 	rm -rf $TEMP
 	rm -f $OUT_FILE
 }
 trap on_exit EXIT
+
 
 # add_player name
 function add_player () {
@@ -37,6 +44,7 @@ function remove_player () {
 	PLAYER="$1"
 	INDEX=0
 	while [ "$INDEX" -lt "${#ARR[@]}" ] ; do
+		# TODO: Something wonky might be going on in here
 		if [ "${ARR[$INDEX]}" == "$PLAYER" ] ; then
 			ARR[$INDEX]=""
 			unset 'ARR[$INDEX]'
@@ -46,6 +54,7 @@ function remove_player () {
 	done
 }
 
+# parse_logs
 function parse_logs () {
 	echo "Parsing logs... \c"
 	while read LINE ; do
@@ -65,6 +74,7 @@ function parse_logs () {
 	echo "Done!"
 }
 
+# update_file
 function update_file () {
 	echo "Updating file... \c"
 	if [ "${#ARR[@]}" -eq "0" ] ; then
@@ -79,17 +89,23 @@ function update_file () {
 }
 
 
+## Initialize
 mkdir -p "$TEMP"
 cp "$LOGS" "$TEMP"
 update_file
 echo "List of active players being saved to \"$OUT_FILE\""
 echo "Remove this file or Ctrl-C to exit this script"
+
+
+## Main loop
 while [ -f "$OUT_FILE" ] ; do
 	if [ -n "$(diff "$TEMP/$LOG_FILE" "$LOGS")" ] ; then
 		echo "log files differ"
 		cp "$LOGS" "$TEMP"
 		parse_logs
 		update_file 
-		echo "${ARR[*]}"
+		#echo "${ARR[*]}" #debug
 	fi
 done
+
+## Cleanup is automatically handled by on_exit 
