@@ -2,7 +2,7 @@
 
 ## EDIT These to match your system
 
-LOG_DIR="/home/dubious/minecraft/logs" # directory where the log files are
+LOG_DIR="logs" # directory where the log files are
 LOG_FILE="latest.log" # the last "unzipped" one, the log file we monitor
 OUT_FILE="mcap_list.txt" # where you want the list stored !! VOLATILE !!
 

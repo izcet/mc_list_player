@@ -13,6 +13,7 @@ I opted to scrape the log files because it allows monitoring of a system, but do
 - It requires at least 1 new line of log output to display correctly, until then it will say (no active players).
 - You can run it with `sh passive_watcher.sh` and it will provide basic output.
 - To fire-and-forget and have it run in the background, use `sh passive_watcher.sh &> /dev/null &` or use `screen`
+<br>
 
 ### Active Watcher
 An example script to provide realtime output.
